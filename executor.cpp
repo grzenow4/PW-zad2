@@ -2,13 +2,13 @@
 
 #include <iostream>
 
-void Executor::add_task(const std::vector<std::string>& args) {
+void Executor::add_task(const std::vector<std::string> &args) {
     _tasks.emplace_back(args);
 }
 
-void Executor::handle_run(const std::vector<std::string>& args) {
+void Executor::handle_run(const std::vector<std::string> &args) {
     std::cout << "Wykonuję run";
-    for (const auto& arg: args) {
+    for (const auto &arg : args) {
         std::cout << " " << arg;
     }
     std::cout << '\n';
@@ -30,9 +30,7 @@ void Executor::handle_sleep(int n) {
     std::cout << "Wykonuję sleep " << n << '\n';
 }
 
-void Executor::handle_quit() {
-    std::cout << "Wykonuję quit\n";
-}
+void Executor::handle_quit() { std::cout << "Wykonuję quit\n"; }
 
 int main() {
     Executor executor = Executor();

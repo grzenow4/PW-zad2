@@ -1,12 +1,11 @@
-#include "err.h"
 #include "utils.h"
+#include "err.h"
 
 #include <cassert>
 #include <cstring>
 #include <fcntl.h>
 
-void set_close_on_exec(int file_descriptor, bool value)
-{
+void set_close_on_exec(int file_descriptor, bool value) {
     int flags = fcntl(file_descriptor, F_GETFD);
     ASSERT_SYS_OK(flags);
     if (value)
@@ -16,9 +15,7 @@ void set_close_on_exec(int file_descriptor, bool value)
     ASSERT_SYS_OK(fcntl(file_descriptor, F_SETFD, flags));
 }
 
-
-std::vector<std::string> split_string(const std::string& s)
-{
+std::vector<std::string> split_string(const std::string &s) {
     size_t len = s.length();
     int spaces = 0;
     for (int i = 0; i < len; i++)
@@ -38,8 +35,7 @@ std::vector<std::string> split_string(const std::string& s)
     return parts;
 }
 
-
-bool read_line(char* buffer, size_t size_of_buffer, FILE* file) {
+bool read_line(char *buffer, size_t size_of_buffer, FILE *file) {
     if (size_of_buffer < 2)
         fatal("Buffer too small: %d\n", size_of_buffer);
 
