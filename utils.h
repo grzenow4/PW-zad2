@@ -1,14 +1,15 @@
 #ifndef MIM_UTILS_H
 #define MIM_UTILS_H
 
-#include <stdbool.h>
-#include <stdio.h>
+#include <cstdio>
+#include <string>
+#include <vector>
 
 /*
  * Set or unset the 'close_on_exec' flag on a given descriptor.
  *
  * As the name suggests, this causes the descriptor to be automatically closed at any exec*().
- * By default this flag is false, but it's a good idea to basically always set it.
+ * By default, this flag is false, but it's a good idea to basically always set it.
  * Note that the flag is false for duplicated descriptors after dup2().
  */
 void set_close_on_exec(int file_descriptor, bool value);
@@ -16,17 +17,14 @@ void set_close_on_exec(int file_descriptor, bool value);
 /*
  * Split a string into space-delimited parts.
  *
- * The result is an array of null-terminated strings, ending with NULL.
- * It must be freed with free_split_string().
+ * The result is a vector of strings.
  *
  * The resulting parts don't contain any spaces.
  * The result has always as many parts as they are spaces, plus 1.
- * In particular, for an empty string, the result is {"", NULL}.
+ * In particular, for an empty string, the result is {""}.
  * An initial or final space, or two consecutive spaces, result in an empty-string part.
  */
-char** split_string(const char* s);
-
-void free_split_string(char** parts);
+std::vector<std::string> split_string(const std::string& s);
 
 /*
  * Read a line from `file`.
@@ -45,4 +43,3 @@ void free_split_string(char** parts);
 bool read_line(char* buffer, size_t size_of_buffer, FILE* file);
 
 #endif
-

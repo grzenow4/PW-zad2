@@ -1,15 +1,12 @@
 #include "err.h"
 
-#include <errno.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#include <cerrno>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
-_Noreturn void syserr(const char* fmt, ...)
+void syserr(const char* fmt, ...)
 {
     va_list fmt_args;
 
@@ -22,7 +19,7 @@ _Noreturn void syserr(const char* fmt, ...)
     exit(1);
 }
 
-_Noreturn void fatal(const char* fmt, ...)
+void fatal(const char* fmt, ...)
 {
     va_list fmt_args;
 

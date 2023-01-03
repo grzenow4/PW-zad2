@@ -1,9 +1,6 @@
 #ifndef MIM_ERR_H
 #define MIM_ERR_H
 
-#include <stdnoreturn.h>
-
-
 /* Assert that expression evaluates to zero (otherwise use result as error number, as in pthreads). */
 #define ASSERT_ZERO(expr)                                                                  \
     do {                                                                                   \
@@ -32,9 +29,9 @@
     } while(0)
 
 /* Prints with information about system error (errno) and quits. */
-_Noreturn extern void syserr(const char* fmt, ...);
+extern void syserr(const char* fmt, ...);
 
 /* Prints (like printf) and quits. */
-_Noreturn extern void fatal(const char* fmt, ...);
+extern void fatal(const char* fmt, ...);
 
 #endif
