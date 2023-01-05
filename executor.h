@@ -1,8 +1,11 @@
 #pragma once
 
+extern "C" {
 #include "err.h"
-#include "task.h"
 #include "utils.h"
+}
+
+#include "task.h"
 
 #include <vector>
 
@@ -14,7 +17,7 @@ class Executor {
 public:
     Executor() = default;
 
-    void handle_run(const std::vector<std::string> &args);
+    void handle_run(char** args);
 
     void handle_out(uint16_t task);
 
@@ -29,5 +32,5 @@ public:
 private:
     std::vector<Task> _tasks;
 
-    void add_task(const std::vector<std::string> &args);
+    void add_task(const std::vector<std::string> &args, pid_t pid, uint16_t task_no);
 };

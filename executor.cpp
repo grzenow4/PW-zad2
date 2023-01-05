@@ -1,17 +1,23 @@
 #include "executor.h"
 
+#include <csignal>
 #include <iostream>
+#include <sys/wait.h>
 
-void Executor::add_task(const std::vector<std::string> &args) {
-    _tasks.emplace_back(args);
+void Executor::add_task(const std::vector<std::string> &args, pid_t pid, uint16_t task_no) {
+    _tasks.emplace_back(args, pid, task_no);
 }
 
-void Executor::handle_run(const std::vector<std::string> &args) {
+void Executor::handle_run(char** args) {
+    std::vector<std::string> cargs;
+
     std::cout << "Wykonuję run";
-    for (const auto &arg : args) {
-        std::cout << " " << arg;
+    for (int i = 0; args[i] != NULL; i++) {
+        std::cout << " " << args[i];
+        cargs.emplace_back(args[i]);
     }
     std::cout << '\n';
+    add_task(cargs, getpid(), _tasks.size());
 }
 
 void Executor::handle_out(uint16_t task) {
@@ -27,39 +33,38 @@ void Executor::handle_kill(uint16_t task) {
 }
 
 void Executor::handle_sleep(int n) {
-    std::cout << "Wykonuję sleep " << n << '\n';
+    usleep(1000 * n);
 }
 
-void Executor::handle_quit() { std::cout << "Wykonuję quit\n"; }
+void Executor::handle_quit() {
+    std::cout << "Wykonuję quit\n";
+}
 
 int main() {
     Executor executor = Executor();
 
-    std::string line;
-    std::vector<std::string> parsed_line;
+    char *line = new char[MAX_TASK_LEN];
 
-    while (getline(std::cin, line)) {
-        parsed_line = split_string(line);
+    while (read_line(line, MAX_TASK_LEN, stdin)) {
+        char **parsed_line = split_string(line);
 
-        if (parsed_line.empty()) {
-            continue;
-        }
-
-        if (parsed_line[0] == "run") {
-            parsed_line.erase(parsed_line.begin());
-            executor.handle_run(parsed_line);
-        } else if (parsed_line[0] == "out") {
+        if (strcmp(parsed_line[0], "run") == 0) {
+            executor.handle_run(parsed_line + 1);
+        } else if (strcmp(parsed_line[0], "out") == 0) {
             executor.handle_out(std::stoi(parsed_line[1]));
-        } else if (parsed_line[0] == "err") {
+        } else if (strcmp(parsed_line[0], "err") == 0) {
             executor.handle_err(std::stoi(parsed_line[1]));
-        } else if (parsed_line[0] == "kill") {
+        } else if (strcmp(parsed_line[0], "kill") == 0) {
             executor.handle_kill(std::stoi(parsed_line[1]));
-        } else if (parsed_line[0] == "sleep") {
+        } else if (strcmp(parsed_line[0], "sleep") == 0) {
             executor.handle_sleep(std::stoi(parsed_line[1]));
-        } else if (parsed_line[0] == "quit") {
+        } else if (strcmp(parsed_line[0], "quit") == 0) {
             executor.handle_quit();
         }
+
+        free_split_string(parsed_line);
     }
 
+    delete[] line;
     return 0;
 }

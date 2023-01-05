@@ -1,9 +1,12 @@
-#include "utils.h"
 #include "err.h"
+#include "utils.h"
 
-#include <cassert>
-#include <cstring>
+#include <assert.h>
 #include <fcntl.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 void set_close_on_exec(int file_descriptor, bool value) {
     int flags = fcntl(file_descriptor, F_GETFD);
@@ -15,37 +18,51 @@ void set_close_on_exec(int file_descriptor, bool value) {
     ASSERT_SYS_OK(fcntl(file_descriptor, F_SETFD, flags));
 }
 
-std::vector<std::string> split_string(const std::string &s) {
-    size_t len = s.length();
+char **split_string(const char *s) {
+    size_t len = strlen(s);
     int spaces = 0;
-    for (int i = 0; i < len; i++)
+    for (int i = 0; i < len; ++i)
         if (s[i] == ' ')
             spaces++;
-    std::vector<std::string> parts(spaces + 1);
+    char **parts = calloc(spaces + 2, sizeof(char *));
+    parts[spaces + 1] = NULL;
     int p = 0;
     int b = 0;
-    for (int i = 0; i < len; i++) {
+    for (int i = 0; i < len; ++i) {
         if (s[i] == ' ') {
-            parts[p++] = s.substr(b, i - b);
+            parts[p++] = strndup(s + b, i - b);
             b = i + 1;
         }
     }
-    parts[p++] = s.substr(b, len - b);
+    parts[p++] = strndup(s + b, len - b);
     assert(p == spaces + 1);
+
+    size_t ml = strlen(parts[p - 1]);
+    if (parts[p - 1][ml - 1] == '\n') {
+        parts[p - 1][ml - 1] = '\0';
+    }
+
     return parts;
+}
+
+void free_split_string(char **parts) {
+    for (int i = 0; parts[i] != NULL; ++i)
+        free(parts[i]);
+    free(parts);
 }
 
 bool read_line(char *buffer, size_t size_of_buffer, FILE *file) {
     if (size_of_buffer < 2)
         fatal("Buffer too small: %d\n", size_of_buffer);
 
-    char *line = nullptr;
+    char *line = NULL;
     size_t n_bytes;
     ssize_t n_chars = getline(&line, &n_bytes, file);
 
     if (n_chars == -1) {
         if (ferror(file))
             syserr("Getline failed.");
+        free(line);
         assert(feof(file));
         buffer[0] = '\0';
         return false;
@@ -68,6 +85,10 @@ bool read_line(char *buffer, size_t size_of_buffer, FILE *file) {
     memcpy(buffer, line, len + 1);
 
     free(line);
+
+    if (buffer[len - 1] == '\n') {
+        buffer[len - 1] = '\0';
+    }
 
     return true;
 }
