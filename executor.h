@@ -7,11 +7,9 @@ extern "C" {
 
 #include "task.h"
 
-#include <vector>
-
-#define MAX_N_TASKS 4096
-#define MAX_OUT_LEN 1022
-#define MAX_TASK_LEN 511
+const int MAX_N_TASKS = 4096;
+const int MAX_OUT_LEN = 1022;
+const int MAX_TASK_LEN = 511;
 
 class Executor {
 public:
@@ -28,6 +26,10 @@ public:
     void handle_sleep(int n);
 
     void handle_quit();
+
+    void read_stdout(int fd, Task *task);
+
+    void read_stderr(int fd, Task *task);
 
 private:
     std::vector<Task> _tasks;
