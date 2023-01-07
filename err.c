@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void syserr(const char *fmt, ...) {
+_Noreturn void syserr(const char *fmt, ...) {
     va_list fmt_args;
 
     fprintf(stderr, "ERROR: ");
@@ -18,7 +18,7 @@ void syserr(const char *fmt, ...) {
     exit(1);
 }
 
-void fatal(const char *fmt, ...) {
+_Noreturn void fatal(const char *fmt, ...) {
     va_list fmt_args;
 
     fprintf(stderr, "ERROR: ");

@@ -1,52 +1,22 @@
 #pragma once
 
-#include <cstring>
-#include <iostream>
-#include <mutex>
-#include <vector>
+#include "err.h"
+#include "utils.h"
 
-class Task {
-public:
-    Task(const std::vector<std::string> &args, pid_t pid, uint16_t task_no);
+#include <pthread.h>
+#include <stdlib.h>
 
-    ~Task();
+typedef struct {
+    char **args;
+    pid_t pid;
+    size_t task_no;
+    bool running;
+    char *out;
+    char *err;
+    pthread_mutex_t mutex_out;
+    pthread_mutex_t mutex_err;
+} Task;
 
-    const std::vector<std::string> &get_args() const;
+Task *task_new(char **args, pid_t pid, size_t task_no);
 
-    pid_t get_pid() const;
-
-    uint16_t get_task_no() const;
-
-    const std::string &get_stdout() const;
-
-    const std::string &get_stderr() const;
-
-    void set_stdout(const std::string &out);
-
-    void set_stderr(const std::string &err);
-
-    void mutex_out_lock();
-
-    void mutex_out_unlock();
-
-    void mutex_err_lock();
-
-    void mutex_err_unlock();
-
-private:
-    std::vector<std::string> _args;
-
-    pid_t _pid;
-
-    uint16_t _task_no;
-
-    bool _running;
-
-    std::string _stdout;
-
-    std::string _stderr;
-
-    pthread_mutex_t _mutex_out;
-
-    pthread_mutex_t _mutex_err;
-};
+void task_free(Task *task);
