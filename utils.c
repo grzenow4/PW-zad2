@@ -37,11 +37,6 @@ char **split_string(const char *s) {
     parts[p++] = strndup(s + b, len - b);
     assert(p == spaces + 1);
 
-    size_t ml = strlen(parts[p - 1]);
-    if (parts[p - 1][ml - 1] == '\n') {
-        parts[p - 1][ml - 1] = '\0';
-    }
-
     return parts;
 }
 
