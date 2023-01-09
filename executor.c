@@ -50,16 +50,16 @@ void *run_task(void *data) {
     ASSERT_SYS_OK(pipe(fd_out));
     ASSERT_SYS_OK(pipe(fd_err));
 
+    set_close_on_exec(fd_out[0], true);
+    set_close_on_exec(fd_out[1], true);
+    set_close_on_exec(fd_err[0], true);
+    set_close_on_exec(fd_err[1], true);
+
     pid_t child = fork();
     ASSERT_SYS_OK(child);
     if (!child) {
         dup2(fd_out[1], STDOUT_FILENO);
         dup2(fd_err[1], STDERR_FILENO);
-
-        ASSERT_SYS_OK(close(fd_out[0]));
-        ASSERT_SYS_OK(close(fd_out[1]));
-        ASSERT_SYS_OK(close(fd_err[0]));
-        ASSERT_SYS_OK(close(fd_err[1]));
 
         execvp(task->args[1], task->args + 1);
         exit(1);
