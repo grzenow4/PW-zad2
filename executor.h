@@ -35,3 +35,5 @@ void *read_stderr(void *data);
 void *run_task(void *data);
 
 void free_tasks(Task **tasks);
+
+void print_status(Task **tasks);
