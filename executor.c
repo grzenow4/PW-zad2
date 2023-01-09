@@ -1,6 +1,5 @@
 #include "executor.h"
 
-#include <semaphore.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -51,11 +50,6 @@ void *run_task(void *data) {
     ASSERT_SYS_OK(pipe(fd_out));
     ASSERT_SYS_OK(pipe(fd_err));
 
-//    set_close_on_exec(fd_out[0], true);
-//    set_close_on_exec(fd_out[1], true);
-//    set_close_on_exec(fd_out[0], true);
-//    set_close_on_exec(fd_err[1], true);
-
     pid_t child = fork();
     ASSERT_SYS_OK(child);
     if (!child) {
@@ -74,7 +68,7 @@ void *run_task(void *data) {
     ASSERT_SYS_OK(close(fd_err[1]));
 
     task->pid = child;
-    ASSERT_ZERO(pthread_mutex_unlock(&mutex));
+    ASSERT_ZERO(sem_post(&mutex));
 
     pthread_t thread_out, thread_err;
     ReadThreadArgs args_out = {.fd = fd_out[0], .task = task};
@@ -99,7 +93,7 @@ void handle_run(Task **tasks, char **args, size_t task_no) {
     Task *task = task_new(args, task_no);
     tasks[task_no] = task;
     pthread_create(&task->thread, NULL, &run_task, task);
-    ASSERT_ZERO(pthread_mutex_lock(&mutex));
+    ASSERT_ZERO(sem_wait(&mutex));
     printf("Task %zu started: pid %d.\n", task->task_no, task->pid);
 }
 
@@ -139,8 +133,7 @@ void free_tasks(Task **tasks) {
 int main() {
     Task **tasks = calloc(MAX_N_TASKS, sizeof(Task *));
     size_t tasks_size = 0;
-    ASSERT_ZERO(pthread_mutex_init(&mutex, NULL));
-    ASSERT_ZERO(pthread_mutex_lock(&mutex));
+    ASSERT_ZERO(sem_init(&mutex, 0, 0));
 
     char *line = calloc(MAX_TASK_LEN, sizeof(char));
 
@@ -171,8 +164,7 @@ int main() {
     }
 
     handle_quit(tasks);
-    ASSERT_ZERO(pthread_mutex_unlock(&mutex));
-    ASSERT_ZERO(pthread_mutex_destroy(&mutex));
+    ASSERT_ZERO(sem_destroy(&mutex));
     free_tasks(tasks);
     free(line);
     return 0;

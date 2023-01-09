@@ -3,7 +3,9 @@
 #include "err.h"
 #include "task.h"
 
-pthread_mutex_t mutex;
+#include <semaphore.h>
+
+sem_t mutex;
 
 typedef struct {
     int fd;
