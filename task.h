@@ -17,13 +17,13 @@ typedef struct {
     pthread_t thread_out;
     pthread_t thread_err;
     pid_t pid;
-    size_t task_no;
+    int task_no;
     char *out;
     char *err;
     sem_t mutex_out;
     sem_t mutex_err;
 } Task;
 
-Task *task_new(char **args, size_t task_no);
+Task *task_new(char **args, int task_no);
 
 void task_free(Task *task);

@@ -81,38 +81,38 @@ void *run_task(void *data) {
     ASSERT_ZERO(pthread_join(task->thread_err, NULL));
 
     if (!WIFEXITED(status)) {
-        printf("Task %zu ended: signalled.\n", task->task_no);
+        printf("Task %d ended: signalled.\n", task->task_no);
     } else {
-        printf("Task %zu ended: status %d.\n", task->task_no, WEXITSTATUS(status));
+        printf("Task %d ended: status %d.\n", task->task_no, WEXITSTATUS(status));
     }
     return NULL;
 }
 
-void handle_run(Task **tasks, char **args, size_t task_no) {
+void handle_run(Task **tasks, char **args, int task_no) {
     Task *task = task_new(args, task_no);
     tasks[task_no] = task;
     pthread_create(&task->thread, NULL, &run_task, task);
     ASSERT_ZERO(sem_wait(&mutex));
-    printf("Task %zu started: pid %d.\n", task->task_no, task->pid);
+    printf("Task %d started: pid %d.\n", task->task_no, task->pid);
 }
 
-void handle_out(Task **tasks, size_t task_no) {
+void handle_out(Task **tasks, int task_no) {
     ASSERT_ZERO(sem_wait(&tasks[task_no]->mutex_out));
-    printf("Task %zu stdout: '%s'.\n", task_no, tasks[task_no]->out);
+    printf("Task %d stdout: '%s'.\n", task_no, tasks[task_no]->out);
     ASSERT_ZERO(sem_post(&tasks[task_no]->mutex_out));
 }
 
-void handle_err(Task **tasks, size_t task_no) {
+void handle_err(Task **tasks, int task_no) {
     ASSERT_ZERO(sem_wait(&tasks[task_no]->mutex_err));
-    printf("Task %zu stderr: '%s'.\n", task_no, tasks[task_no]->err);
+    printf("Task %d stderr: '%s'.\n", task_no, tasks[task_no]->err);
     ASSERT_ZERO(sem_post(&tasks[task_no]->mutex_err));
 }
 
-void handle_kill(Task **tasks, size_t task_no) {
+void handle_kill(Task **tasks, int task_no) {
     kill(tasks[task_no]->pid, SIGINT);
 }
 
-void handle_sleep(size_t n) {
+void handle_sleep(int n) {
     usleep(1000 * n);
 }
 
@@ -131,7 +131,7 @@ void free_tasks(Task **tasks) {
 
 int main() {
     Task **tasks = calloc(MAX_N_TASKS, sizeof(Task *));
-    size_t tasks_size = 0;
+    int tasks_size = 0;
     ASSERT_ZERO(sem_init(&mutex, 0, 0));
 
     char *line = calloc(MAX_TASK_LEN, sizeof(char));
@@ -143,16 +143,16 @@ int main() {
             handle_run(tasks, parsed_line, tasks_size);
             tasks_size++;
         } else if (strcmp(parsed_line[0], "out") == 0) {
-            handle_out(tasks, strtoul(parsed_line[1], NULL, 10));
+            handle_out(tasks, (int) strtol(parsed_line[1], NULL, 10));
             free_split_string(parsed_line);
         } else if (strcmp(parsed_line[0], "err") == 0) {
-            handle_err(tasks, strtoul(parsed_line[1], NULL, 10));
+            handle_err(tasks, (int) strtol(parsed_line[1], NULL, 10));
             free_split_string(parsed_line);
         } else if (strcmp(parsed_line[0], "kill") == 0) {
-            handle_kill(tasks, strtoul(parsed_line[1], NULL, 10));
+            handle_kill(tasks, (int) strtol(parsed_line[1], NULL, 10));
             free_split_string(parsed_line);
         } else if (strcmp(parsed_line[0], "sleep") == 0) {
-            handle_sleep(strtoul(parsed_line[1], NULL, 10));
+            handle_sleep((int) strtol(parsed_line[1], NULL, 10));
             free_split_string(parsed_line);
         } else if (strcmp(parsed_line[0], "quit") == 0) {
             free_split_string(parsed_line);

@@ -1,6 +1,6 @@
 #include "task.h"
 
-Task *task_new(char **args, size_t task_no) {
+Task *task_new(char **args, int task_no) {
     Task *task = malloc(sizeof(Task));
     if (!task) fatal("malloc failed");
     task->args = args;

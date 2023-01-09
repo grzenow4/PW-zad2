@@ -12,15 +12,15 @@ typedef struct {
     Task *task;
 } ReadThreadArgs;
 
-void handle_run(Task **tasks, char **args, size_t task_no);
+void handle_run(Task **tasks, char **args, int task_no);
 
-void handle_out(Task **tasks, size_t task_no);
+void handle_out(Task **tasks, int task_no);
 
-void handle_err(Task **tasks, size_t task_no);
+void handle_err(Task **tasks, int task_no);
 
-void handle_kill(Task **tasks, size_t task_no);
+void handle_kill(Task **tasks, int task_no);
 
-void handle_sleep(size_t n);
+void handle_sleep(int n);
 
 void handle_quit(Task **tasks);
 
