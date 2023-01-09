@@ -13,9 +13,9 @@ void *read_stdout(void *data) {
     FILE *file = fdopen(fd, "r");
 
     while (read_line(buf, MAX_OUT_LEN, file)) {
-        ASSERT_ZERO(pthread_mutex_lock(&task->mutex_out));
+        ASSERT_ZERO(sem_wait(&task->mutex_out));
         strcpy(task->out, buf);
-        ASSERT_ZERO(pthread_mutex_unlock(&task->mutex_out));
+        ASSERT_ZERO(sem_post(&task->mutex_out));
     }
 
     ASSERT_ZERO(fclose(file));
@@ -32,9 +32,9 @@ void *read_stderr(void *data) {
     FILE *file = fdopen(fd, "r");
 
     while (read_line(buf, MAX_OUT_LEN, file)) {
-        ASSERT_ZERO(pthread_mutex_lock(&task->mutex_err));
+        ASSERT_ZERO(sem_wait(&task->mutex_err));
         strcpy(task->err, buf);
-        ASSERT_ZERO(pthread_mutex_unlock(&task->mutex_err));
+        ASSERT_ZERO(sem_post(&task->mutex_err));
     }
 
     ASSERT_ZERO(fclose(file));
@@ -68,18 +68,17 @@ void *run_task(void *data) {
     ASSERT_SYS_OK(close(fd_err[1]));
 
     task->pid = child;
-    ASSERT_ZERO(sem_post(&mutex));
 
-    pthread_t thread_out, thread_err;
     ReadThreadArgs args_out = {.fd = fd_out[0], .task = task};
     ReadThreadArgs args_err = {.fd = fd_err[0], .task = task};
-    pthread_create(&thread_out, NULL, &read_stdout, &args_out);
-    pthread_create(&thread_err, NULL, &read_stderr, &args_err);
+    pthread_create(&task->thread_out, NULL, &read_stdout, &args_out);
+    pthread_create(&task->thread_err, NULL, &read_stderr, &args_err);
+    ASSERT_ZERO(sem_post(&mutex));
 
     int status;
     ASSERT_SYS_OK(waitpid(child, &status, 0));
-    ASSERT_ZERO(pthread_join(thread_out, NULL));
-    ASSERT_ZERO(pthread_join(thread_err, NULL));
+    ASSERT_ZERO(pthread_join(task->thread_out, NULL));
+    ASSERT_ZERO(pthread_join(task->thread_err, NULL));
 
     if (!WIFEXITED(status)) {
         printf("Task %zu ended: signalled.\n", task->task_no);
@@ -98,15 +97,15 @@ void handle_run(Task **tasks, char **args, size_t task_no) {
 }
 
 void handle_out(Task **tasks, size_t task_no) {
-    ASSERT_ZERO(pthread_mutex_lock(&tasks[task_no]->mutex_out));
+    ASSERT_ZERO(sem_wait(&tasks[task_no]->mutex_out));
     printf("Task %zu stdout: '%s'.\n", task_no, tasks[task_no]->out);
-    ASSERT_ZERO(pthread_mutex_unlock(&tasks[task_no]->mutex_out));
+    ASSERT_ZERO(sem_post(&tasks[task_no]->mutex_out));
 }
 
 void handle_err(Task **tasks, size_t task_no) {
-    ASSERT_ZERO(pthread_mutex_lock(&tasks[task_no]->mutex_err));
+    ASSERT_ZERO(sem_wait(&tasks[task_no]->mutex_err));
     printf("Task %zu stderr: '%s'.\n", task_no, tasks[task_no]->err);
-    ASSERT_ZERO(pthread_mutex_unlock(&tasks[task_no]->mutex_err));
+    ASSERT_ZERO(sem_post(&tasks[task_no]->mutex_err));
 }
 
 void handle_kill(Task **tasks, size_t task_no) {

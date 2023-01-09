@@ -4,6 +4,7 @@
 #include "utils.h"
 
 #include <pthread.h>
+#include <semaphore.h>
 #include <stdlib.h>
 
 #define MAX_N_TASKS 4096
@@ -13,12 +14,14 @@
 typedef struct {
     char **args;
     pthread_t thread;
+    pthread_t thread_out;
+    pthread_t thread_err;
     pid_t pid;
     size_t task_no;
     char *out;
     char *err;
-    pthread_mutex_t mutex_out;
-    pthread_mutex_t mutex_err;
+    sem_t mutex_out;
+    sem_t mutex_err;
 } Task;
 
 Task *task_new(char **args, size_t task_no);
