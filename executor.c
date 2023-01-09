@@ -73,18 +73,18 @@ void *run_task(void *data) {
     ReadThreadArgs args_err = {.fd = fd_err[0], .task = task};
     pthread_create(&task->thread_out, NULL, &read_stdout, &args_out);
     pthread_create(&task->thread_err, NULL, &read_stderr, &args_err);
-    ASSERT_ZERO(sem_post(&mutex));
+    ASSERT_ZERO(sem_post(&task_mutex));
 
     int status;
     ASSERT_SYS_OK(waitpid(child, &status, 0));
     ASSERT_ZERO(pthread_join(task->thread_out, NULL));
     ASSERT_ZERO(pthread_join(task->thread_err, NULL));
 
-    if (!WIFEXITED(status)) {
-        printf("Task %d ended: signalled.\n", task->task_no);
-    } else {
-        printf("Task %d ended: status %d.\n", task->task_no, WEXITSTATUS(status));
-    }
+    writer_start(&rw);
+    task->status = status;
+    ended_tasks[ended_tasks_size] = task->task_no;
+    ended_tasks_size++;
+    writer_end(&rw);
     return NULL;
 }
 
@@ -92,7 +92,7 @@ void handle_run(Task **tasks, char **args, int task_no) {
     Task *task = task_new(args, task_no);
     tasks[task_no] = task;
     pthread_create(&task->thread, NULL, &run_task, task);
-    ASSERT_ZERO(sem_wait(&mutex));
+    ASSERT_ZERO(sem_wait(&task_mutex));
     printf("Task %d started: pid %d.\n", task->task_no, task->pid);
 }
 
@@ -129,15 +129,30 @@ void free_tasks(Task **tasks) {
     free(tasks);
 }
 
+void print_status(Task **tasks) {
+    for (int i = 0; i < ended_tasks_size; i++) {
+        Task *task = tasks[ended_tasks[i]];
+        ASSERT_ZERO(pthread_join(task->thread, NULL));
+        task->joined = true;
+        print_task(task);
+    }
+    ended_tasks_size = 0;
+}
+
 int main() {
     Task **tasks = calloc(MAX_N_TASKS, sizeof(Task *));
     int tasks_size = 0;
-    ASSERT_ZERO(sem_init(&mutex, 0, 0));
+    ASSERT_ZERO(sem_init(&task_mutex, 0, 0));
+    init(&rw);
+    ended_tasks = calloc(MAX_N_TASKS, sizeof(int));
 
     char *line = calloc(MAX_TASK_LEN, sizeof(char));
 
     while (read_line(line, MAX_TASK_LEN, stdin)) {
         char **parsed_line = split_string(line);
+
+        reader_start(&rw);
+        print_status(tasks);
 
         if (strcmp(parsed_line[0], "run") == 0) {
             handle_run(tasks, parsed_line, tasks_size);
@@ -156,15 +171,20 @@ int main() {
             free_split_string(parsed_line);
         } else if (strcmp(parsed_line[0], "quit") == 0) {
             free_split_string(parsed_line);
+            reader_end(&rw);
             break;
         } else {
             free_split_string(parsed_line);
         }
+
+        reader_end(&rw);
     }
 
     handle_quit(tasks);
-    ASSERT_ZERO(sem_destroy(&mutex));
+    ASSERT_ZERO(sem_destroy(&task_mutex));
     free_tasks(tasks);
+    destroy(&rw);
+    free(ended_tasks);
     free(line);
     return 0;
 }

@@ -1,11 +1,15 @@
 #pragma once
 
 #include "err.h"
+#include "readers_writers.h"
 #include "task.h"
 
 #include <semaphore.h>
 
-sem_t mutex;
+sem_t task_mutex;
+ReadWrite rw;
+int *ended_tasks;
+int ended_tasks_size = 0;
 
 typedef struct {
     int fd;

@@ -13,17 +13,18 @@
 
 typedef struct {
     char **args;
-    pthread_t thread;
-    pthread_t thread_out;
-    pthread_t thread_err;
+    pthread_t thread, thread_out, thread_err;
     pid_t pid;
     int task_no;
     char *out;
     char *err;
-    sem_t mutex_out;
-    sem_t mutex_err;
+    sem_t mutex_out, mutex_err;
+    int status;
+    bool joined;
 } Task;
 
 Task *task_new(char **args, int task_no);
+
+void print_task(Task *task);
 
 void task_free(Task *task);
