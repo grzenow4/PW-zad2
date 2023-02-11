@@ -75,15 +75,12 @@ void *run_task(void *data) {
     pthread_create(&task->thread_err, NULL, &read_stderr, &args_err);
     ASSERT_ZERO(sem_post(&task_mutex));
 
-    int status;
-    ASSERT_SYS_OK(waitpid(child, &status, 0));
+    ASSERT_SYS_OK(waitpid(child, &task->status, 0));
     ASSERT_ZERO(pthread_join(task->thread_out, NULL));
     ASSERT_ZERO(pthread_join(task->thread_err, NULL));
 
     writer_start(&rw);
-    task->status = status;
-    ended_tasks[ended_tasks_size] = task->task_no;
-    ended_tasks_size++;
+    print_task(task);
     writer_end(&rw);
     return NULL;
 }
@@ -129,22 +126,11 @@ void free_tasks(Task **tasks) {
     free(tasks);
 }
 
-void print_status(Task **tasks) {
-    for (int i = 0; i < ended_tasks_size; i++) {
-        Task *task = tasks[ended_tasks[i]];
-        ASSERT_ZERO(pthread_join(task->thread, NULL));
-        task->joined = true;
-        print_task(task);
-    }
-    ended_tasks_size = 0;
-}
-
 int main() {
     Task **tasks = calloc(MAX_N_TASKS, sizeof(Task *));
     int tasks_size = 0;
     ASSERT_ZERO(sem_init(&task_mutex, 0, 0));
     init(&rw);
-    ended_tasks = calloc(MAX_N_TASKS, sizeof(int));
 
     char *line = calloc(MAX_TASK_LEN, sizeof(char));
 
@@ -152,7 +138,6 @@ int main() {
         char **parsed_line = split_string(line);
 
         reader_start(&rw);
-        print_status(tasks);
 
         if (strcmp(parsed_line[0], "run") == 0) {
             handle_run(tasks, parsed_line, tasks_size);
@@ -184,7 +169,6 @@ int main() {
     ASSERT_ZERO(sem_destroy(&task_mutex));
     free_tasks(tasks);
     destroy(&rw);
-    free(ended_tasks);
     free(line);
     return 0;
 }

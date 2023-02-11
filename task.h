@@ -20,7 +20,6 @@ typedef struct {
     char *err;
     sem_t mutex_out, mutex_err;
     int status;
-    bool joined;
 } Task;
 
 Task *task_new(char **args, int task_no);

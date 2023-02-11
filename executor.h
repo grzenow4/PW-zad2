@@ -8,8 +8,6 @@
 
 sem_t task_mutex;
 ReadWrite rw;
-int *ended_tasks;
-int ended_tasks_size = 0;
 
 typedef struct {
     int fd;
@@ -35,5 +33,3 @@ void *read_stderr(void *data);
 void *run_task(void *data);
 
 void free_tasks(Task **tasks);
-
-void print_status(Task **tasks);
